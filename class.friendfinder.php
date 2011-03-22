@@ -5,6 +5,7 @@ ini_set('memory_limit', '128M');
 class FriendFinder {
 
 	var $initial_profile_url; 
+	var $valid_profile_regex;
 	var $valid_friend_urls = array();
 
 	/**
@@ -12,12 +13,6 @@ class FriendFinder {
 	 * @var Private $valid_service_regex
 	 **/
 	var $valid_service_regex = '/http:\/\/(github\.com\/.*)|http:\/\/www.flickr.com\/photos\/*|http:\/\/twitter.com\/*|http:\/\/quora.com\/*|http:\/\/linkedin.com\/*/i';
-	
-	/**
-	 * Regex for the profile you are looking for
-	 * @var Private $valid_profile_regex
-	 **/
-	 var $valid_profile_regex = '/http:\/\/www.flickr.com\/photos\/*/i';
 	
 	/**
 	 * Endpoint for the Social Graph API
@@ -40,10 +35,12 @@ class FriendFinder {
 
 	/**
 	 * Constructor method for FriendFinder
-	 * @param String $initial_profile_url User Profile to Crawl From
+	 * @param String $initial_profile_url User profile to crawl from
+	 * @param String $where_to_find_friends Site to find friends on, e.g. 'flickr'
 	 **/
-	function __construct($initial_profile_url) {
+	function __construct($initial_profile_url, $where_to_find_friends) {
 		$this->initial_profile_url = $initial_profile_url;
+		$this->valid_profile_regex = $this->get_regex_for_profile($where_to_find_friends);
 		$this->find_friends();
 		$this->display_friends();
 	}
@@ -113,7 +110,7 @@ class FriendFinder {
 	/**
 	 * Make a request to the Social Graph API	 
 	 * @param String $profile_url 
-	 * @return String $payload
+	 * @return String
 	 **/
 	function make_request($profile_url) {
 
@@ -128,9 +125,28 @@ class FriendFinder {
 		return $payload;
 
 	}
+	
+	/**
+	 * Get the proper regex for the profile that we want to find	 
+	 * @param String $where_to_find_friends 
+	 * @return String
+	 **/
+	function get_regex_for_profile($where_to_find_friends) {
+		//At some point, this map could be used to build $this->valid_service_regex
+		$profile_regex_map = array(
+			'flickr' 	=> '/http:\/\/www.flickr.com\/photos\/*/i',
+			'github' 	=> '/http:\/\/(github\.com\/.*)',
+			'quora' 	=> '/http:\/\/quora.com\/*/i',
+			'linkedin' 	=> 'http:\/\/linkedin.com\/*/i',
+			'twitter' 	=> '/http:\/\/twitter.com\/*/i',
+			'yelp' 		=> '/\.*yelp.com\/user_details|\.*yelp.com$/'
+		);
+		
+		return $profile_regex_map["$where_to_find_friends"];
+	}
 
 }
 
-new FriendFinder('http://www.yelp.com/user_details?userid=59SbbCoprJ1kSELJxafIGA');
+new FriendFinder('http://www.yelp.com/user_details?userid=59SbbCoprJ1kSELJxafIGA', 'flickr');
 
 ?>
